@@ -24,7 +24,7 @@ source myotaro/bin/activate  # Windows: myotaro\Scripts\activate
 ```
 
 ```bash
-pip install bleak pygame
+pip install bleak pygame matplotlib
 ```
 
 ## Arduinoのセットアップ
@@ -52,6 +52,15 @@ python main.py
 - デバイスが見つかると pygame ウィンドウが開き，腕の傾きに応じてポインタが動く
 - `Esc` またはウィンドウを閉じると終了
 
+### リアルタイムグラフ表示
+
+加速度・ジャイロの6軸データをグラフで確認したい場合に使う．
+
+```bash
+cd src
+python realtime_graph.py
+```
+
 ### 加速度ログの記録
 
 ```bash
@@ -77,6 +86,7 @@ myo2/
 │   ├── ble_receiver.py  # BLE受信（asyncio）
 │   ├── filter.py        # 適応フィルタ（キャリブレーション不要）
 │   └── display.py       # pygame リアルタイム描画
+│   └── realtime_graph.py# 6軸リアルタイムグラフ（独立スクリプト）
 ├── ble_accel_logger.py  # 加速度をCSVに記録するユーティリティ
 ├── ble_scan_debug.py    # BLEスキャンデバッグ用
 └── data/                # ログCSV保存先（.gitignore対象）
