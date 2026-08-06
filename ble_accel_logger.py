@@ -7,7 +7,8 @@ Nano 33 IoTからBLE経由で加速度データ(X,Y,Z)を受信し,CSVに保存�
 使い方:
     python ble_accel_logger.py
 """
-
+from dotenv import load_dotenv
+import os
 import asyncio
 import struct
 import csv
@@ -15,12 +16,14 @@ from datetime import datetime
 from pathlib import Path
 from bleak import BleakScanner, BleakClient
 
+load_dotenv()
+
 # Arduino側のスケッチで定義したUUIDと合わせる
-SERVICE_UUID = "19b10000-e8f2-537e-4f6c-d104768a1214"
-CHARACTERISTIC_UUID = "19b10001-e8f2-537e-4f6c-d104768a1214"
+SERVICE_UUID = os.getenv('SERVICE_UUID')
+CHARACTERISTIC_UUID = os.getenv('CHARACTERISTIC_UUID')
 
 # Arduino側でBLE.setLocalName()に設定した名前
-DEVICE_NAME = "Arduino"
+DEVICE_NAME = os.getenv('DEVICE_NAME')
 
 # 保存先ディレクトリ
 DATA_DIR = Path("data")
