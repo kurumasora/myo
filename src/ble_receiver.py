@@ -18,7 +18,7 @@ async def run(data_queue: queue.Queue, stop_event: asyncio.Event) -> None:
     print(f"'{DEVICE_NAME}' をスキャン中...")
 
     device = await BleakScanner.find_device_by_filter(
-        lambda d, _: d.name == DEVICE_NAME
+        lambda d, ad: ad.local_name == DEVICE_NAME
     )
 
     if device is None:

@@ -56,7 +56,7 @@ async def main():
     print("Nano 33 IoT (AccelSensor) をスキャン中...")
 
     device = await BleakScanner.find_device_by_filter(
-        lambda d, ad: d.name == DEVICE_NAME
+        lambda d, ad: ad.local_name == DEVICE_NAME
     )
 
     if device is None:
