@@ -36,10 +36,10 @@ CSV_FILENAME = DATA_DIR / f"accel_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}
 def notification_handler(csv_writer):
     """
     BLEのnotifyを受け取るたびに呼ばれるコールバック関数を返す.
-    12バイト(float×3, リトルエンディアン)をX,Y,Zに変換してCSVに書き込む.
+    6軸24バイト
     """
     def handler(sender, data: bytearray):
-        if len(data) != 12:
+        if len(data) != 24:
             print(f"想定外のデータ長です: {len(data)} bytes")
             return
 
