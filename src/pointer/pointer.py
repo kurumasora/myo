@@ -1,4 +1,4 @@
-"""ax, ay を二重積分して画面座標を返す."""
+"""ay, az を二重積分して画面座標を返す."""
 
 
 class PointerController:
@@ -11,7 +11,7 @@ class PointerController:
 
     def update(self, ax: float, ay: float, az: float,
                gx: float, gy: float, gz: float) -> tuple[float, float]:
-        self._vx += ax * self._dt
+        self._vx += ay * self._dt          # Y軸 → 画面X
         self._vy += (az - 1.0) * self._dt
         self._px += self._vx * self._dt
         self._py += self._vy * self._dt
