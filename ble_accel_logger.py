@@ -43,11 +43,11 @@ def notification_handler(csv_writer):
             print(f"想定外のデータ長です: {len(data)} bytes")
             return
 
-        x, y, z = struct.unpack("<fff", data)
+        ax, ay, az, gx, gy, gz = struct.unpack("<ffffff", data)
         timestamp = datetime.now().isoformat(timespec="milliseconds")
 
-        print(f"{timestamp}  X={x:+.3f}  Y={y:+.3f}  Z={z:+.3f}")
-        csv_writer.writerow([timestamp, x, y, z])
+        print(f"{timestamp}  AX={ax:+.3f}  AY={ay:+.3f}  AZ={az:+.3f}  GX={gx:+.3f}  GY={gy:+.3f}  GZ={gz:+.3f}")
+        csv_writer.writerow([timestamp, ax, ay, az, gx, gy, gz])
 
     return handler
 
@@ -68,7 +68,7 @@ async def main():
 
     with open(CSV_FILENAME, mode="w", newline="", encoding="utf-8") as f:
         csv_writer = csv.writer(f)
-        csv_writer.writerow(["timestamp", "x", "y", "z"])  # ヘッダー行
+        csv_writer.writerow(["timestamp", "ax", "ay", "az", "gx", "gy", "gz"])
 
         async with BleakClient(device) as client:
             print(f"接続しました. Ctrl+C で終了します. 保存先: {CSV_FILENAME}")
