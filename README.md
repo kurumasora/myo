@@ -1,11 +1,11 @@
 # myo2
 
-Arduino Nano 33 IoT の加速度センサをBLE経由でPCに送信し，腕の動きで画面上のポインタをリアルタイム操作するシステム．
+Arduino Nano 33 IoT の6軸IMU（加速度＋ジャイロ）をBLE経由でPCに送信し，腕の動きで画面上のポインタをリアルタイム操作するシステム．
 
 ## 必要なもの
 
 **ハードウェア**
-- Arduino Nano 33 IoT（加速度センサ LSM6DS3 内蔵）
+- Arduino Nano 33 IoT（6軸IMU LSM6DSOX 内蔵）
 
 **ソフトウェア**
 - Python 3.11 以上
@@ -24,7 +24,20 @@ source myotaro/bin/activate  # Windows: myotaro\Scripts\activate
 ```
 
 ```bash
-pip install bleak pygame matplotlib
+pip install bleak pygame matplotlib python-dotenv
+```
+
+### 環境変数の設定
+
+```bash
+cp .env.example .env
+```
+
+`.env` の内容（変更不要であればそのまま使える）：
+
+```
+DEVICE_NAME=AccelSensor
+CHARACTERISTIC_UUID=19b10001-e8f2-537e-4f6c-d104768a1214
 ```
 
 ## Arduinoのセットアップ
@@ -32,49 +45,50 @@ pip install bleak pygame matplotlib
 Arduino IDEで以下のライブラリをインストールする：
 
 - `ArduinoBLE`
-- `Arduino_LSM6DS3`
+- `Arduino_LSM6DSOX`
 
-スケッチを書き込み，シリアルモニタで加速度データが出力されていることを確認してから接続する．
+ボードは **Arduino SAMD Boards (32-bits ARM Cortex-M0+)** をBoards Managerからインストールし，`Arduino Nano 33 IoT` を選択する．
 
-> BLE のデバイス名が `Arduino`，UUIDが `19b10001-e8f2-537e-4f6c-d104768a1214` であることを前提としている．異なる場合は `src/ble_receiver.py` の定数を変更すること．
+スケッチを書き込み，シリアルモニタに `BLEアドバタイズ開始` と表示されることを確認してから接続する．
 
 ## 使い方
 
+全スクリプトはArduinoの電源を入れてアドバタイズ状態にしてから実行する．
+
 ### ポインタ操作（メイン機能）
 
-Arduinoの電源を入れてアドバタイズ状態にしてから実行する．
-
 ```bash
-cd src
+cd bk
 python main.py
 ```
 
-- デバイスが見つかると pygame ウィンドウが開き，腕の傾きに応じてポインタが動く
+- pygame ウィンドウが開き，腕の傾きに応じてポインタが動く
 - `Esc` またはウィンドウを閉じると終了
 
 ### リアルタイムグラフ表示
 
-加速度・ジャイロの6軸データをグラフで確認したい場合に使う．
+加速度・ジャイロの6軸データをグラフで確認する．動作確認やデバッグに使う．
 
 ```bash
 cd src
 python realtime_graph.py
 ```
 
-### 加速度ログの記録
+### 6軸データのCSV記録
 
 ```bash
+cd src
 python ble_accel_logger.py
 ```
 
-`data/accel_log_YYYYMMDD_HHMMSS.csv` に保存される．`Ctrl+C` で終了．
+`data/accel_log_YYYYMMDD_HHMMSS.csv` に保存される（列: `timestamp, ax, ay, az, gx, gy, gz`）．`Ctrl+C` で終了．
 
 ### BLEデバイスの確認
 
 デバイスが見つからない場合のデバッグ用．
 
 ```bash
-python ble_scan_debug.py
+python ble_debug.py
 ```
 
 ## プロジェクト構成
@@ -82,15 +96,31 @@ python ble_scan_debug.py
 ```
 myo2/
 ├── src/
-│   ├── main.py          # エントリーポイント
-│   ├── ble_receiver.py  # BLE受信（asyncio）
-│   ├── filter.py        # 適応フィルタ（キャリブレーション不要）
-│   └── display.py       # pygame リアルタイム描画
-│   └── realtime_graph.py# 6軸リアルタイムグラフ（独立スクリプト）
-├── ble_accel_logger.py  # 加速度をCSVに記録するユーティリティ
-├── ble_scan_debug.py    # BLEスキャンデバッグ用
-└── data/                # ログCSV保存先（.gitignore対象）
+│   ├── ble_accel_logger.py  # 6軸データをCSVに記録するユーティリティ
+│   └── realtime_graph.py    # 6軸リアルタイムグラフ（独立スクリプト）
+├── bk/
+│   ├── main.py              # エントリーポイント
+│   ├── ble_receiver.py      # BLE受信・6軸パース（asyncio）
+│   ├── filter.py            # 適応フィルタ（キャリブレーション不要）
+│   └── display.py           # pygame リアルタイム描画
+├── .env                     # 環境変数（gitignore対象）
+├── .env.example             # 環境変数テンプレート
+├── ble_debug.py             # BLEスキャンデバッグ用
+└── data/                    # ログCSV保存先（gitignore対象）
 ```
+
+## データフォーマット
+
+ArduinoからBLEで送信されるデータは **24バイト（float × 6, リトルエンディアン）**．
+
+| バイト | 内容 | 単位 |
+|---|---|---|
+| 0–3 | 加速度 X (ax) | g |
+| 4–7 | 加速度 Y (ay) | g |
+| 8–11 | 加速度 Z (az) | g |
+| 12–15 | 角速度 X (gx) | deg/s |
+| 16–19 | 角速度 Y (gy) | deg/s |
+| 20–23 | 角速度 Z (gz) | deg/s |
 
 ## アルゴリズム概要
 
@@ -115,7 +145,11 @@ myo2/
 **デバイスが見つからない**
 - macOS のシステム設定 > プライバシーとセキュリティ > Bluetooth でターミナル／Python に権限を付与する
 - `python ble_scan_debug.py` でデバイスが見えているか確認する
+- `.env` の `DEVICE_NAME` がArduinoスケッチの `BLE.setLocalName()` と一致しているか確認する
 
 **ポインタがふらつく**
 - 起動直後はゼロ点が収束していないため数秒間ふらつくのは正常
 - 安静にした状態で10秒ほど待つと安定する
+
+**想定外のデータ長エラーが出る**
+- ArduinoスケッチがBLEで送信するバイト数と，Python側の期待する24バイトが一致しているか確認する
