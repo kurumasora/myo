@@ -4,14 +4,18 @@ BLE経由でArduino Nano 33 IoTから6軸IMUデータを受信し、キューに
 """
 
 import asyncio
-import struct
+import os
 import queue
+import struct
 
+from dotenv import load_dotenv
 from bleak import BleakScanner, BleakClient
 
+load_dotenv()
+
 SERVICE_UUID = "19b10000-e8f2-537e-4f6c-d104768a1214"
-CHARACTERISTIC_UUID = "19b10001-e8f2-537e-4f6c-d104768a1214"
-DEVICE_NAME = "AccelSensor"
+CHARACTERISTIC_UUID = os.getenv("CHARACTERISTIC_UUID")
+DEVICE_NAME = os.getenv("DEVICE_NAME")
 
 
 async def run(data_queue: queue.Queue, stop_event: asyncio.Event) -> None:
