@@ -12,7 +12,7 @@ class PointerController:
     def update(self, ax: float, ay: float, az: float,
                gx: float, gy: float, gz: float) -> tuple[float, float]:
         self._vx += ax * self._dt
-        self._vy += ay * self._dt
+        self._vy += (az - 1.0) * self._dt
         self._px += self._vx * self._dt
         self._py += self._vy * self._dt
         return self._px, self._py
