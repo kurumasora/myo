@@ -1,19 +1,16 @@
-"""
-BLE経由でArduino Nano 33 IoTから6軸IMUデータを受信し、キューに流す.
-送信フォーマット: float × 6 = 24バイト (ax, ay, az, gx, gy, gz)
-"""
+"""BLE経由で6軸IMUデータ（24バイト）を受信してキューに流す."""
 
 import asyncio
 import os
 import queue
 import struct
+from pathlib import Path
 
+from bleak import BleakClient, BleakScanner
 from dotenv import load_dotenv
-from bleak import BleakScanner, BleakClient
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
-SERVICE_UUID = "19b10000-e8f2-537e-4f6c-d104768a1214"
 CHARACTERISTIC_UUID = os.getenv("CHARACTERISTIC_UUID")
 DEVICE_NAME = os.getenv("DEVICE_NAME")
 
@@ -24,7 +21,6 @@ async def run(data_queue: queue.Queue, stop_event: asyncio.Event) -> None:
     device = await BleakScanner.find_device_by_filter(
         lambda d, ad: ad.local_name == DEVICE_NAME
     )
-
     if device is None:
         print(f"デバイス '{DEVICE_NAME}' が見つかりませんでした.")
         stop_event.set()
@@ -34,17 +30,17 @@ async def run(data_queue: queue.Queue, stop_event: asyncio.Event) -> None:
 
     def handler(sender, data: bytearray) -> None:
         if len(data) == 24:
-            ax, ay, az, gx, gy, gz = struct.unpack("<ffffff", data)
+            values = struct.unpack("<ffffff", data)
             if data_queue.full():
                 try:
                     data_queue.get_nowait()
                 except queue.Empty:
                     pass
-            data_queue.put_nowait((ax, ay, az, gx, gy, gz))
+            data_queue.put_nowait(values)
 
     async with BleakClient(device) as client:
         await client.start_notify(CHARACTERISTIC_UUID, handler)
-        print("受信中. Ctrl+C またはウィンドウを閉じると終了します.")
+        print("受信中. Ctrl+C またはウィンドウを閉じると終了.")
         try:
             await stop_event.wait()
         finally:
