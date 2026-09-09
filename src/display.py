@@ -1,4 +1,4 @@
-"""加速度の二重積分によるポインタ表示. R キーでリセット."""
+"""手首の回転角（roll/pitch）を直接画面座標にマッピングするポインタ表示."""
 
 import queue
 import sys
@@ -13,7 +13,9 @@ _TEXT    = (120, 120, 140)
 _GREEN   = (60, 200, 100)
 _YELLOW  = (200, 160, 60)
 
-_SENSITIVITY = 5000.0  # [g·s²] → [px]
+# px が [-1, +1] → 画面幅/高さにマッピング
+_HALF_W = 400  # px=±1 が画面端
+_HALF_H = 300
 
 
 def run(data_queue: "queue.Queue") -> None:
@@ -36,8 +38,6 @@ def run(data_queue: "queue.Queue") -> None:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit(); sys.exit()
-                if event.key == pygame.K_r:
-                    pointer.reset()
 
         latest = None
         while True:
@@ -52,8 +52,8 @@ def run(data_queue: "queue.Queue") -> None:
             pointer.update(ax, ay, az, gx, gy, gz)
 
         px, py = pointer.position
-        draw_x = max(0, min(w, int(cx + px * _SENSITIVITY)))
-        draw_y = max(0, min(h, int(cy + py * _SENSITIVITY)))
+        draw_x = max(0, min(w, int(cx + px * _HALF_W)))
+        draw_y = max(0, min(h, int(cy + py * _HALF_H)))
 
         screen.fill(_BG)
         pygame.draw.circle(screen, _POINTER, (draw_x, draw_y), 20)
@@ -62,8 +62,9 @@ def run(data_queue: "queue.Queue") -> None:
             "BLE: Connected" if connected else "BLE: Waiting...", True, _TEXT), (28, 8))
 
         if connected:
+            roll, pitch = pointer.angles
             screen.blit(font.render(
-                f"px:{px:+.4f}  py:{py:+.4f}   [R] reset", True, _TEXT), (10, h - 26))
+                f"roll:{roll:+.1f}°  pitch:{pitch:+.1f}°", True, _TEXT), (10, h - 26))
 
         pygame.display.flip()
         clock.tick(60)
