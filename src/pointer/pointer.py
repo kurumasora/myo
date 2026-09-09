@@ -31,7 +31,7 @@ class PointerController:
         self._pitch = math.degrees(pitch)
 
         # 角度を [-1, +1] に正規化して画面座標へ
-        self._px = self._roll  / _MAX_ROLL_DEG
+        self._px = -self._roll / _MAX_ROLL_DEG
         self._py = self._pitch / _MAX_PITCH_DEG
 
         return self._px, self._py
